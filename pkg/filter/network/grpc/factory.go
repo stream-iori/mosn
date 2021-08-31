@@ -163,7 +163,7 @@ func (f *grpcServerFilterFactory) UnaryInterceptorFilter(ctx context.Context, re
 
 // StreamInterceptorFilter is an implementation of grpc.StreamServerInterceptor, which used to be call stream filter in MOSN
 func (f *grpcServerFilterFactory) StreamInterceptorFilter(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-
+	
 	//TODO
 	//to use mosn stream filter here, we must
 	//1. only support intercept when the first request come and before the last response send (this maybe the standard implementation?)

@@ -342,7 +342,3 @@ func (m *Mosn) Close() {
 	m.wg.Done()
 
 }
-
-func (m *Mosn) GetServer() []server.Server {
-	return m.servers
-}
