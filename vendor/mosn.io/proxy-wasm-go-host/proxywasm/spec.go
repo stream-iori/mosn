@@ -15,6 +15,6 @@
  * limitations under the License.
  */
 
-package v1
+package proxywasm
 
 // spec: https://github.com/proxy-wasm/spec/tree/master/abi-versions/vNEXT

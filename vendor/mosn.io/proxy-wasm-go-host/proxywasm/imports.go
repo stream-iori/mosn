@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package v1
+package proxywasm
 
 import (
-	"mosn.io/proxy-wasm-go-host/proxywasm/common"
+	"mosn.io/proxy-wasm-go-host/common"
 )
 
 func RegisterImports(instance common.WasmInstance) {
@@ -138,10 +138,10 @@ func ProxyCallForeignFunction(instance common.WasmInstance, funcNamePtr int32, f
 
 	ctx := getImportHandler(instance)
 
-	ret, res := ctx.CallForeignFunction(string(funcName), param)
+	ret, res := ctx.CallForeignFunction(string(funcName), string(param))
 	if res != WasmResultOk {
 		return res.Int32()
 	}
 
-	return copyBytesIntoInstance(instance, ret, returnData, returnSize).Int32()
+	return copyIntoInstance(instance, ret, returnData, returnSize).Int32()
 }

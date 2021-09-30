@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package v1
+package proxywasm
 
 import (
-	"mosn.io/proxy-wasm-go-host/proxywasm/common"
+	"mosn.io/proxy-wasm-go-host/common"
 )
 
 func GetBuffer(instance common.WasmInstance, bufferType BufferType) common.IoBuffer {

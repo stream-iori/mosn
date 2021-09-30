@@ -32,8 +32,8 @@ import (
 	"mosn.io/mosn/pkg/wasm/abi/proxywasm010"
 	"mosn.io/pkg/buffer"
 	"mosn.io/pkg/utils"
-	"mosn.io/proxy-wasm-go-host/proxywasm/common"
-	proxywasm "mosn.io/proxy-wasm-go-host/proxywasm/v1"
+	"mosn.io/proxy-wasm-go-host/common"
+	"mosn.io/proxy-wasm-go-host/proxywasm"
 )
 
 const ProxyWasm = "proxywasm"
@@ -128,7 +128,7 @@ func (f *FilterConfigFactory) GetVmConfig() common.IoBuffer {
 		m[typeOf.Field(i).Name] = fmt.Sprintf("%v", valueOf.Field(i).Interface())
 	}
 
-	b := common.EncodeMap(m)
+	b := proxywasm.EncodeMap(m)
 	if b == nil {
 		return nil
 	}
@@ -143,7 +143,7 @@ func (f *FilterConfigFactory) GetPluginConfig() common.IoBuffer {
 		return f.pluginConfigBytes
 	}
 
-	b := common.EncodeMap(f.config.UserData)
+	b := proxywasm.EncodeMap(f.config.UserData)
 	if b == nil {
 		return nil
 	}

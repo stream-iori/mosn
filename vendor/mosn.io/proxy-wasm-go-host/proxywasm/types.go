@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package v1
+package proxywasm
 
 type Action int32
 

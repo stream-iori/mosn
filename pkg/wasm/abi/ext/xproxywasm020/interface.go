@@ -20,7 +20,7 @@ package xproxywasm020
 import (
 	"mosn.io/api"
 	"mosn.io/mosn/pkg/types"
-	proxywasm "mosn.io/proxy-wasm-go-host/proxywasm/v1"
+	"mosn.io/proxy-wasm-go-host/proxywasm"
 )
 
 type Exports interface {

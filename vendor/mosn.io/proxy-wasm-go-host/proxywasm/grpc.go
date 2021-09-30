@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package v1
+package proxywasm
 
 import (
-	"mosn.io/proxy-wasm-go-host/proxywasm/common"
+	"mosn.io/proxy-wasm-go-host/common"
 )
 
 func ProxyOpenGrpcStream(instance common.WasmInstance, grpcServiceData int32, grpcServiceSize int32,

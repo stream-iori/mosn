@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package v1
+package proxywasm
 
 import (
-	"mosn.io/proxy-wasm-go-host/proxywasm/common"
+	"mosn.io/proxy-wasm-go-host/common"
 )
 
 func ProxyGetProperty(instance common.WasmInstance, keyPtr int32, keySize int32, returnValueData int32, returnValueSize int32) int32 {

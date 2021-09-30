@@ -28,8 +28,8 @@ import (
 	"mosn.io/mosn/pkg/log"
 	"mosn.io/mosn/pkg/protocol"
 	"mosn.io/pkg/buffer"
-	"mosn.io/proxy-wasm-go-host/proxywasm/common"
-	proxywasm "mosn.io/proxy-wasm-go-host/proxywasm/v1"
+	"mosn.io/proxy-wasm-go-host/common"
+	"mosn.io/proxy-wasm-go-host/proxywasm"
 )
 
 type DefaultImportsHandler struct {
@@ -117,9 +117,9 @@ func (d *DefaultImportsHandler) HttpCall(reqURL string, header common.HeaderMap,
 }
 
 // override
-func (d *DefaultImportsHandler) Wait() proxywasm.Action {
+func (d *DefaultImportsHandler) Wait() {
 	if d.hc == nil || !d.hc.reqOnFly {
-		return proxywasm.ActionContinue
+		return
 	}
 
 	// release the instance lock and do sync http req
@@ -132,7 +132,7 @@ func (d *DefaultImportsHandler) Wait() proxywasm.Action {
 	if err != nil {
 		log.DefaultLogger.Errorf("[proxywasm010][imports] HttpCall id: %v fail to do http req, err: %v, reqURL: %v",
 			d.hc.id, err, d.hc.urlString)
-		return proxywasm.ActionPause
+		return
 	}
 	d.hc.resp = resp
 
@@ -173,7 +173,6 @@ func (d *DefaultImportsHandler) Wait() proxywasm.Action {
 	if err != nil {
 		log.DefaultLogger.Errorf("[proxywasm010][imports] httpCall id: %v fail to call ProxyOnHttpCallResponse, err: %v", d.hc.id, err)
 	}
-	return proxywasm.ActionContinue
 }
 
 // override
