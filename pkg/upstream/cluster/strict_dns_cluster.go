@@ -224,7 +224,7 @@ func (sdc *strictDnsCluster) updateDynamicHosts(newHosts []types.Host, rt *Resol
 				log.DefaultLogger.Infof("[upstream] [strict dns cluster] resolve dns new address:%s", h.AddressString())
 			}
 		}
-		sdc.simpleCluster.UpdateHosts(newHosts)
+		sdc.simpleCluster.UpdateHosts(allHosts)
 		if log.DefaultLogger.GetLogLevel() >= log.INFO {
 			log.DefaultLogger.Infof("[upstream] [strict dns cluster] resolve dns result updated, cluster_name:%s, address:%s", sdc.simpleCluster.info.name, rt.dnsAddress)
 		}
@@ -250,14 +250,14 @@ func (rt *ResolveTarget) StartResolve() {
 		select {
 		case <-rt.stop:
 			if log.DefaultLogger.GetLogLevel() >= log.DEBUG {
-				log.DefaultLogger.Debugf("[upstream] [strict dns cluster] stop resolve dns timer, address:%s, ttl:%d", rt.dnsAddress)
+				log.DefaultLogger.Debugf("[upstream] [strict dns cluster] stop resolve dns timer, address:%s", rt.dnsAddress)
 			}
 			return
 		default:
 			select {
 			case <-rt.stop:
 				if log.DefaultLogger.GetLogLevel() >= log.DEBUG {
-					log.DefaultLogger.Debugf("[upstream] [strict dns cluster] stop resolve dns timer, address:%s, ttl:%d", rt.dnsAddress)
+					log.DefaultLogger.Debugf("[upstream] [strict dns cluster] stop resolve dns timer, address:%s", rt.dnsAddress)
 				}
 				return
 			case <-rt.timeout:

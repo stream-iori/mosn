@@ -39,12 +39,29 @@ type ListenerState int
 // listener state
 // ListenerInited means listener is inited, a inited listener can be started or stopped
 // ListenerRunning means listener is running, start a running listener will be ignored.
-// ListenerStopped means listener is stopped, start a stopped listener without restart flag will be ignored.
+// ListenerStopped means listener is stopped.
+// ListenerClosed  means listener is closed, start a closed listener without restart flag will be ignored.
 const (
 	ListenerInited ListenerState = iota
 	ListenerRunning
 	ListenerStopped
+	ListenerClosed
 )
+
+// Factory function for creating mosn listener.
+type ListenerFactory func(lc *v2.Listener) types.Listener
+
+var listenerFactory ListenerFactory = NewListener
+
+func GetListenerFactory() ListenerFactory {
+	return listenerFactory
+}
+
+func RegisterListenerFactory(factory ListenerFactory) {
+	if factory != nil {
+		listenerFactory = factory
+	}
+}
 
 // listener impl based on golang net package
 type listener struct {
@@ -124,6 +141,10 @@ func (l *listener) Start(lctx context.Context, restart bool) {
 				log.DefaultLogger.Debugf("[network] [listener start] %s is running", l.name)
 				return true
 			case ListenerStopped:
+				if err := l.setDeadline(time.Time{}); err != nil {
+					log.DefaultLogger.Alertf("listener.start", "[network] [listener start] [listen] %s reset deadline failed, %v", l.name, err)
+				}
+			case ListenerClosed:
 				if !restart {
 					return true
 				}
@@ -200,20 +221,52 @@ func (l *listener) readMsgEventLoop(lctx context.Context) {
 	})
 }
 
-func (l *listener) Stop() error {
-	if !l.bindToPort {
-		return nil
+// Shutdown stop accepting new connections and graceful close the existing connections
+func (l *listener) Shutdown() error {
+	changed, err := l.stopAccept()
+	if changed {
+		l.cb.OnShutdown()
 	}
-	l.cb.OnClose()
+	return err
+}
+
+// stopAccept just stop accepting new connections
+func (l *listener) stopAccept() (changed bool, err error) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+	if l.state == ListenerClosed || l.state == ListenerStopped {
+		return
+	}
+	l.state = ListenerStopped
+	changed = true
+
+	if !l.bindToPort {
+		return
+	}
+	err = l.setDeadline(time.Now())
+	return
+}
+
+func (l *listener) setDeadline(t time.Time) error {
 	var err error
 	switch l.network {
 	case "udp":
-		err = l.packetConn.SetDeadline(time.Now())
+		if l.packetConn == nil {
+			return errors.New("setDeadline: packetConn is nil")
+		}
+		err = l.packetConn.SetDeadline(t)
 	case "unix":
-		err = l.rawl.(*net.UnixListener).SetDeadline(time.Now())
+		if l.rawl == nil {
+			return errors.New("setDeadline: raw listener is nil")
+		}
+		err = l.rawl.(*net.UnixListener).SetDeadline(t)
 	case "tcp":
-		err = l.rawl.(*net.TCPListener).SetDeadline(time.Now())
+		if l.rawl == nil {
+			return errors.New("setDeadline: raw listener is nil")
+		}
+		err = l.rawl.(*net.TCPListener).SetDeadline(t)
 	}
+
 	return err
 }
 
@@ -232,12 +285,22 @@ func (l *listener) ListenerFile() (*os.File, error) {
 
 	switch l.network {
 	case "udp":
+		if l.packetConn == nil {
+			return nil, errors.New("ListenerFile: packetConn is nil")
+		}
 		return l.packetConn.(*net.UDPConn).File()
 	case "unix":
+		if l.rawl == nil {
+			return nil, errors.New("ListenerFile: raw listener is nil")
+		}
 		return l.rawl.(*net.UnixListener).File()
 	case "tcp":
+		if l.rawl == nil {
+			return nil, errors.New("ListenerFile: raw listener is nil")
+		}
 		return l.rawl.(*net.TCPListener).File()
 	}
+
 	return nil, errors.New("not support this network " + l.network)
 }
 
@@ -268,18 +331,22 @@ func (l *listener) UseOriginalDst() bool {
 func (l *listener) Close(lctx context.Context) error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
-	l.state = ListenerStopped
+	l.state = ListenerClosed
 
 	if !l.bindToPort {
 		return nil
 	}
 
 	if l.rawl != nil {
-		l.cb.OnClose()
+		if l.cb != nil {
+			l.cb.OnClose()
+		}
 		return l.rawl.Close()
 	}
 	if l.packetConn != nil {
-		l.cb.OnClose()
+		if l.cb != nil {
+			l.cb.OnClose()
+		}
 		return l.packetConn.Close()
 	}
 	return nil
@@ -325,7 +392,9 @@ func (l *listener) accept(lctx context.Context) error {
 
 	// TODO: use thread pool
 	utils.GoWithRecover(func() {
-		l.cb.OnAccept(rawc, l.useOriginalDst, nil, nil, nil)
+		if l.cb != nil {
+			l.cb.OnAccept(rawc, l.useOriginalDst, nil, nil, nil)
+		}
 	}, nil)
 
 	return nil
