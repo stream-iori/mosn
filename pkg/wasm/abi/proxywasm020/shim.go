@@ -15,23 +15,35 @@
  * limitations under the License.
  */
 
-package context
+package proxywasm020
 
 import (
-	"context"
-
-	"mosn.io/mosn/pkg/types"
+	"mosn.io/api"
+	"mosn.io/pkg/buffer"
+	"mosn.io/proxy-wasm-go-host/proxywasm/common"
 )
 
-type valueCtx struct {
-	context.Context
-
-	builtin [types.ContextKeyEnd]interface{}
+// HeaderMapWrapper wraps api.HeaderMap into proxy-wasm-go-host/common.HeaderMap
+// implement common.HeaderMap
+type HeaderMapWrapper struct {
+	api.HeaderMap
 }
 
-func (c *valueCtx) Value(key interface{}) interface{} {
-	if contextKey, ok := key.(types.ContextKey); ok {
-		return c.builtin[contextKey]
-	}
-	return c.Context.Value(key)
+func (h HeaderMapWrapper) Clone() common.HeaderMap {
+	return &HeaderMapWrapper{h.HeaderMap}
+}
+
+// HeaderMapWrapperBack wraps proxy-wasm-go-host/common.HeaderMap into api.HeaderMap
+type HeaderMapWrapperBack struct {
+	common.HeaderMap
+}
+
+func (h HeaderMapWrapperBack) Clone() api.HeaderMap {
+	return nil
+}
+
+// IoBufferWrapper  wraps buffer.IoBuffer into proxy-wasm-go-host/common.IoBuffer
+// implement common.IoBuffer
+type IoBufferWrapper struct {
+	buffer.IoBuffer
 }
